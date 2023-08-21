@@ -1,0 +1,1 @@
+MODEL_URL = "https://9241-34-83-17-199.ngrok.io"

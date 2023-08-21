@@ -1,10 +1,15 @@
 from typing import Any, List, Mapping, Optional
-
+import langchain
+langchain.verbose = False
 from langchain.callbacks.manager import CallbackManagerForLLMRun
 from langchain.llms.base import LLM
 import requests
 
+
+import Globals
+
 class CustomLLM(LLM):
+
     n: int
 
     @property
@@ -21,18 +26,19 @@ class CustomLLM(LLM):
             raise ValueError("stop kwargs are not permitted.")
         
         response = requests.post(
-            "http://cef7-34-90-248-231.ngrok.io/generate/",
+            Globals.MODEL_URL+"/generate/",
 
             json={
                 "inputs": prompt,
                 "parameters": {
-                    "temperature": 0.2,
+                    "temperature": 0,
+                    "max_tokens": 512,
                     }
                 }
             ) 
         
         return response.json()["generated_text"]
-
+    
     @property
     def _identifying_params(self) -> Mapping[str, Any]:
         """Get the identifying parameters."""
