@@ -8,9 +8,12 @@ from langchain.chains.summarize import load_summarize_chain
 from langchain.embeddings import GPT4AllEmbeddings
 from langchain.prompts import PromptTemplate
 
+import streamlit as st
 
 import numpy as np
 from sklearn.cluster import KMeans
+
+import csv
 
 class summarizer():
 
@@ -24,11 +27,17 @@ class summarizer():
 
         chunks = text_splitter.create_documents([self.text])
 
+        print("Number of Chunks: "+str(len(chunks)))
+
         embeddings = GPT4AllEmbeddings()
 
         #create embeddings
         vectors = embeddings.embed_documents([x.page_content for x in chunks])
-        # Assuming 'embeddings' is a list or array of 1536-dimensional embeddings
+        
+        # 'embeddings' is a list or array of 538-dimensional embeddings
+        print("Vector dimensions:"+ str(len(vectors[0])))
+        print("Vector dimensions:"+ str(len(vectors[1])))
+
 
         # Choose the number of clusters, this can be adjusted based on the text's content.
         num_clusters = 7
@@ -36,7 +45,20 @@ class summarizer():
         #perform k-means clustering
         kmeans = KMeans(n_clusters=num_clusters, random_state=42).fit(vectors)
 
-        print(kmeans.labels_)
+
+        #Write the embeddings to embeddings.tsv
+
+        with open('embeddings.tsv', 'w') as tsvfile:
+            writer = csv.writer(tsvfile, delimiter='\t')
+
+            for vect in vectors:
+                writer.writerow(vect)
+
+
+        print("Clusters:\n")
+        dicts = {i:kmeans.labels_[i] for i in range(0, len(kmeans.labels_))}
+        print(dicts)
+        
         # Create an empty list that will hold your closest points
         closest_indices = []
 
@@ -54,19 +76,19 @@ class summarizer():
 
         
         selected_indices = sorted(closest_indices)
+
+        print("Selected cluster centers:\n")
         print(selected_indices)
 
         map_prompt = """
         [INST]
         <<SYS>>
-        You will be given a single passage of a research paper. This section will be enclosed in triple backticks (```)
-        Your goal is to give a summary of this section so that a reader will have a full understanding of what happened.
-        Your response should fully encompass what was said in the passage.
-        Skip the header messages and the salutations.
+        Write a summary of the following text delimited by triple backticks.
+        Return your response which covers the key points of the text.
         <</SYS>>
 
         ```{text}```
-        FULL SUMMARY: [/INST]
+        SUMMARY: [/INST]
         """
         map_prompt_template = PromptTemplate(template=map_prompt, input_variables=["text"])
 
@@ -116,7 +138,7 @@ class summarizer():
                                         )
         
         output = reduce_chain.run([summaries])
-        return output, summary_list
+        return output, summary_list, selected_docs
         
 
 
