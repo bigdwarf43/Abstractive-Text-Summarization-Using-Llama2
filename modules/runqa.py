@@ -21,7 +21,7 @@ class runqa():
 
     def runChat(self):
 
-        # os.environ["OPENAI_API_KEY"] = "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"
+        
 
         text_splitter = CharacterTextSplitter(
             separator="\n", chunk_size=1000, chunk_overlap=200, length_function=len
@@ -81,6 +81,8 @@ class runqa():
 
         embeddings = GPT4AllEmbeddings()
         #embeddings = SentenceTransformerEmbeddings(model_name="flax-sentence-embeddings/all_datasets_v4_MiniLM-L6")
+        
+        
 
         knowledge_base = Qdrant.from_texts(
             chunks,
@@ -88,6 +90,7 @@ class runqa():
             location=":memory:",
             collection_name="doc_chunks",
         )
+
 
         user_question = st.text_input("Ask a question about your PDF:")
 

@@ -4,14 +4,19 @@ from langchain.schema import Document
 # Splitters
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
+from langchain.chains import ReduceDocumentsChain, MapReduceDocumentsChain
 from langchain.chains.summarize import load_summarize_chain
 from langchain.embeddings import GPT4AllEmbeddings
 from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
+from langchain.chains.combine_documents.stuff import StuffDocumentsChain
 
 import streamlit as st
+import matplotlib.pyplot as plt
 
 import numpy as np
 from sklearn.cluster import KMeans
+from sklearn.cluster import MiniBatchKMeans
 
 import csv
 
@@ -36,14 +41,44 @@ class summarizer():
         
         # 'embeddings' is a list or array of 538-dimensional embeddings
         print("Vector dimensions:"+ str(len(vectors[0])))
-        print("Vector dimensions:"+ str(len(vectors[1])))
+        
 
+
+        
+        # Find the optimal number of clusters using the elbow method
+        distortions = []
+        cluster_range = range(3, 15)  # You can adjust the range based on your data
+        for k in cluster_range:
+            kmeans = MiniBatchKMeans(n_clusters=k, random_state=42)
+            kmeans.fit(vectors)
+            distortions.append(kmeans.inertia_)
+
+
+        # Plot the distortions to find the elbow point
+        plt.figure(figsize=(8, 6))
+        plt.plot(cluster_range, distortions, marker='o')
+        plt.title('Elbow Method for Optimal Number of Clusters')
+        plt.xlabel('Number of Clusters')
+        plt.ylabel('WCSS')
+        plt.savefig('foo2.png')
 
         # Choose the number of clusters, this can be adjusted based on the text's content.
-        num_clusters = 7
+        elbow_point = None
+        for i in range(1, len(distortions) - 1):
+            if distortions[i] < distortions[i - 1] and distortions[i] < distortions[i + 1]:
+                elbow_point = i + 1
+
+        if elbow_point is not None:
+            optimal_num_clusters = cluster_range[elbow_point - 1]
+            print(f"Optimal number of clusters based on the elbow method: {optimal_num_clusters}")
+        else:
+            print("No clear elbow point found, please manually select the optimal number of clusters.")
+            optimal_num_clusters = 10
+
 
         #perform k-means clustering
-        kmeans = KMeans(n_clusters=num_clusters, random_state=42).fit(vectors)
+        kmeans = MiniBatchKMeans(n_clusters=optimal_num_clusters, random_state=42)
+        kmeans.fit(vectors)
 
 
         #Write the embeddings to embeddings.tsv
@@ -55,35 +90,30 @@ class summarizer():
                 writer.writerow(vect)
 
 
+        # Get the cluster labels for each data point
+        cluster_labels = kmeans.labels_
+
+        # Create a dictionary to store the cluster labels for each data point
+        cluster_dict = {i: cluster_labels[i] for i in range(len(cluster_labels))}
+
         print("Clusters:\n")
-        dicts = {i:kmeans.labels_[i] for i in range(0, len(kmeans.labels_))}
-        print(dicts)
+        print(cluster_dict)
         
-        # Create an empty list that will hold your closest points
-        closest_indices = []
 
-        # Loop through the number of clusters you have
-        for i in range(num_clusters):
-            
-            # Get the list of distances from that particular cluster center
-            distances = np.linalg.norm(vectors - kmeans.cluster_centers_[i], axis=1)
-            
-            # Find the list position of the closest one (using argmin to find the smallest distance)
-            closest_index = np.argmin(distances)
-            
-            # Append that position to your closest indices list
-            closest_indices.append(closest_index)
+        # Find the closest point to each cluster center
+        closest_indices = np.argmin(kmeans.transform(vectors), axis=0)
 
-        
-        selected_indices = sorted(closest_indices)
+        # Sort the closest indices
+        selected_indices = np.sort(closest_indices) 
 
         print("Selected cluster centers:\n")
         print(selected_indices)
+        print("The cluster length: "+str(len(selected_indices)))
 
         map_prompt = """
         [INST]
         <<SYS>>
-        Write a summary of the following text delimited by triple backticks.
+        Write a summary of the following text.
         Return your response which covers the key points of the text.
         <</SYS>>
 
@@ -119,15 +149,10 @@ class summarizer():
         print(summaries)
 
         combine_prompt = """
-        [INST]
-        <<SYS>>
-        You will be given a series of summaries from a research paper. The summaries will be enclosed in triple backticks (```)
-        Your goal is to use these summaries as context and give a concise summary of what is given in the research paper. Output the summary in paragraphs.
-        The reader should be able to grasp what is mentioned in the research paper.
-        <</SYS>>
-
-        ```{text}```
-        VERBOSE SUMMARY: [/INST]
+        The following is set of summaries:
+        {text}
+        Take these and distil it into a final consolidated summary with title(mandatory) in bold with important key points . 
+        SUMMARY: 
         """
         combine_prompt_template = PromptTemplate(template=combine_prompt, input_variables=["text"])
 
@@ -138,6 +163,44 @@ class summarizer():
                                         )
         
         output = reduce_chain.run([summaries])
+
+
+        # map_template = """The following is a set of documents
+        # {docs}
+        # Based on this list of docs, summarised into meaningful
+        # Helpful Answer:"""
+
+        # map_prompt = PromptTemplate.from_template(map_template)
+        # map_chain = LLMChain(llm=self.llm, prompt=map_prompt)
+
+        # reduce_template = """The following is set of summaries:
+        # {doc_summaries}
+        # Take these and distil it into a final consolidated summary with title(mandatory) in bold with important key points . 
+        # Helpful Answer:"""
+
+        # reduce_prompt = PromptTemplate.from_template(reduce_template)
+        # reduce_chain = LLMChain(llm=self.llm, prompt=reduce_prompt)
+
+
+        # combine_documents_chain = StuffDocumentsChain(
+        #     llm_chain=reduce_chain, document_variable_name="doc_summaries"
+        # )
+        # reduce_documents_chain = ReduceDocumentsChain(
+        #     combine_documents_chain=combine_documents_chain,
+        #     collapse_documents_chain=combine_documents_chain,
+        #     token_max=5000,
+        # )
+
+        # map_reduce_chain = MapReduceDocumentsChain(
+        # llm_chain=map_chain,
+        # reduce_documents_chain=reduce_documents_chain,
+        # document_variable_name="docs",
+        # return_intermediate_steps=False,
+        # )
+
+        # output = map_reduce_chain.run(selected_docs)
+        # summary_list = []
+
         return output, summary_list, selected_docs
         
 
