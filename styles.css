@@ -1,0 +1,48 @@
+body {
+    background-color: black;
+}
+
+.css-pb6fr7 {
+    position: fixed;
+    bottom: 5%;
+}
+
+/* .ai::before {
+    content: url('./brain-pfp.svg');
+    width: 40px;
+    height: 40px;
+    display: inline-block;
+}
+
+.user::before {
+    content: url('user-pfp.png');
+    width: 40px;
+    height: 40px;
+    display: inline-block;
+} */
+
+.ai, .user {
+    padding: 20px;
+    margin: 10px 0;
+    width: 100%;
+    z-index: -1;
+}
+
+.ai {
+    background-color: #262730;
+}
+
+.user {
+    background-color: #343541;
+}
+
+.stTextInput {
+    z-index: 100;
+    background-color: #262730;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.stTextInput input {
+    background-color: #343541;
+}

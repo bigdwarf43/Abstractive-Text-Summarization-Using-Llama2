@@ -19,7 +19,7 @@ class runqa():
 
     def runChat(self):
 
-        os.environ["OPENAI_API_KEY"] = "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"
+        # os.environ["OPENAI_API_KEY"] = "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"
 
         text_splitter = CharacterTextSplitter(
                 separator="\n", chunk_size=1000, chunk_overlap=200, length_function=len
@@ -58,8 +58,7 @@ class runqa():
 
         user_question = st.text_input("Ask a question about your PDF:")
 
-
-        if user_question:
+        if user_question and user_question != "":
             docs = knowledge_base.similarity_search(user_question, k=4)
 
 #             srcDocs = [Document(page_content=""" 
@@ -92,15 +91,58 @@ class runqa():
             #     score_name = f"{name}_score"
             #     print(f"{score_name}: {eval_chain(queryDict)[score_name]}")
 
-            st.subheader("Answer: ")
-            st.success(response)
+            # st.write("User: " + user_question)
+            # st.write("AI: " + response)
 
-            st.subheader("Referenced Chunks: ")
-            for i in range(len(docs)):
-                 st.info(docs[i].page_content)
+            # questions_history.append(user_question)
+            # answers_history.append(response)
+
+            if 'questions_history' in st.session_state:
+                questions_history = st.session_state['questions_history']
+                questions_history.append(user_question)
+                st.session_state['questions_history'] = questions_history
+
+                answers_history = st.session_state['answers_history']
+                answers_history.append(response)
+                st.session_state['answers_history'] = answers_history
+
+                reference_history = st.session_state['reference_history']
+                reference_history.append(docs)
+                st.session_state['reference_history'] = reference_history
+
+            else:
+                questions_history = []
+                questions_history.append(user_question)
+
+                answers_history = []
+                answers_history.append(response)
+
+                reference_history = []
+                reference_history.append(docs)
+
+                st.session_state['questions_history'] = questions_history
+                st.session_state['answers_history'] = answers_history
+                st.session_state['reference_history'] = reference_history
+
+            # st.subheader("Answer: ")
+            # st.success(response)
+
+            # st.subheader("Referenced Chunks: ")
+            # for i in range(len(docs)):
+            #      st.info(docs[i].page_content)
 
 
+        if 'questions_history' in st.session_state:
+            questions_history = st.session_state.questions_history
+            answers_history = st.session_state.answers_history
+            reference_history = st.session_state.reference_history
 
-            
+            for i in range(len(answers_history)):
 
-     
+                st.markdown(f'<div class="user">{questions_history[i]}</div>', unsafe_allow_html=True)
+                # st.write("User: " + questions_history[i])
+                st.markdown(f'<div class="ai">{answers_history[i]}</div>', unsafe_allow_html=True)
+                with st.expander("Referenced chunks: "):
+                    for j in reference_history[i]:
+                        st.write(j.page_content)
+                # st.write("AI: " + answers_history[i])
