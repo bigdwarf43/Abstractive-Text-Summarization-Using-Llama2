@@ -9,7 +9,7 @@ from langchain.chains.summarize import load_summarize_chain
 from langchain.embeddings import GPT4AllEmbeddings
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
-from langchain.chains.combine_documents.stuff import StuffDocumentsChain
+
 
 import streamlit as st
 import matplotlib.pyplot as plt
@@ -108,7 +108,7 @@ class summarizer():
 
         print("Selected cluster centers:\n")
         print(selected_indices)
-        print("The cluster length: "+str(len(selected_indices)))
+        print("Number of clusters: "+str(len(selected_indices)))
 
         map_prompt = """
         [INST]
@@ -120,6 +120,7 @@ class summarizer():
         ```{text}```
         SUMMARY: [/INST]
         """
+        
         map_prompt_template = PromptTemplate(template=map_prompt, input_variables=["text"])
 
         map_chain = load_summarize_chain(llm=self.llm,
@@ -163,43 +164,6 @@ class summarizer():
                                         )
         
         output = reduce_chain.run([summaries])
-
-
-        # map_template = """The following is a set of documents
-        # {docs}
-        # Based on this list of docs, summarised into meaningful
-        # Helpful Answer:"""
-
-        # map_prompt = PromptTemplate.from_template(map_template)
-        # map_chain = LLMChain(llm=self.llm, prompt=map_prompt)
-
-        # reduce_template = """The following is set of summaries:
-        # {doc_summaries}
-        # Take these and distil it into a final consolidated summary with title(mandatory) in bold with important key points . 
-        # Helpful Answer:"""
-
-        # reduce_prompt = PromptTemplate.from_template(reduce_template)
-        # reduce_chain = LLMChain(llm=self.llm, prompt=reduce_prompt)
-
-
-        # combine_documents_chain = StuffDocumentsChain(
-        #     llm_chain=reduce_chain, document_variable_name="doc_summaries"
-        # )
-        # reduce_documents_chain = ReduceDocumentsChain(
-        #     combine_documents_chain=combine_documents_chain,
-        #     collapse_documents_chain=combine_documents_chain,
-        #     token_max=5000,
-        # )
-
-        # map_reduce_chain = MapReduceDocumentsChain(
-        # llm_chain=map_chain,
-        # reduce_documents_chain=reduce_documents_chain,
-        # document_variable_name="docs",
-        # return_intermediate_steps=False,
-        # )
-
-        # output = map_reduce_chain.run(selected_docs)
-        # summary_list = []
 
         return output, summary_list, selected_docs
         

@@ -49,12 +49,12 @@ if pdfs:
         for doc in input_docs:
             st.info(doc)
 
-        results = rouge.compute(predictions=[output],
-                         references=[[x for x in summary_list]])
+        # results = rouge.compute(predictions=[output],
+        #                  references=[[x for x in summary_list]])
 
 
-        st.subheader("Rouge Scores: ")
-        st.success(f"Rouge2: {results['rouge2']}")
-        st.success(f"RougeL: {results['rougeL']}")
-        st.success(f"Rouge1: {results['rouge1']}")
-        st.success(f"RougeLsum: {results['rougeLsum']}")
+        # st.subheader("Rouge Scores: ")
+        # st.success(f"Rouge2: {results['rouge2']}")
+        # st.success(f"RougeL: {results['rougeL']}")
+        # st.success(f"Rouge1: {results['rouge1']}")
+        # st.success(f"RougeLsum: {results['rougeLsum']}")

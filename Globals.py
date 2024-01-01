@@ -1,1 +1,1 @@
-MODEL_URL = "https://31db-104-196-125-54.ngrok.io"
+MODEL_URL = "https://8ad8-34-125-124-156.ngrok-free.app"
