@@ -15,6 +15,10 @@ The Llama2 model can be swapped with any other large language model by overwriti
 ## Colab file to host LLama2 on Colab GPU 
 https://colab.research.google.com/drive/1Yxst2uOyWYVacXHA10WavO3L_ypg-8nZ?usp=sharing
 
+## Workflow
+<img src="https://github.com/bigdwarf43/Abstractive-Text-Summarization-Using-Llama2/assets/62785185/6ab9281b-6c89-41c9-a364-43122a635a41" width="500" height="800">
+
+<img src="https://github.com/bigdwarf43/Abstractive-Text-Summarization-Using-Llama2/assets/62785185/3b062b53-d69a-4949-84f1-a64e582eefb9" width="500" height="500">
 
 ## Summarization example
 ![Summarizer-main](https://github.com/bigdwarf43/langchain-pdf-chat/assets/62785185/6f4bbf66-0f88-44c9-adf4-2bc0f26c6b37)
